@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Realtime Monitoring</title>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #fdeaa7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .card {
+            width: 90%;
+            max-width: 600px;
+            background-color: #fff;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+
+    <script>
+        // Konfigurasi Firebase kamu
+        var firebaseConfig = {
+            apiKey: "AIzaSyBSPthv35HXmVqQtrgAPDu_AP4n2VJKKCI",
+            authDomain: "gas-alert-ec6d4.firebaseapp.com",
+            databaseURL: "https://gas-alert-ec6d4-default-rtdb.firebaseio.com",
+            projectId: "gas-alert-ec6d4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+
+        let gasData = [['Waktu', 'Gas']];
+        let suhuData = [['Waktu', 'Suhu']];
+        let humData = [['Waktu', 'Kelembapan']];
+
+        function drawCharts() {
+            const gasChart = new google.visualization.LineChart(document.getElementById('gas_chart'));
+            const suhuChart = new google.visualization.LineChart(document.getElementById('suhu_chart'));
+            const humChart = new google.visualization.LineChart(document.getElementById('hum_chart'));
+
+            setInterval(() => {
+                const now = new Date().toLocaleTimeString();
+
+                database.ref('/sensor').once('value', snapshot => {
+                    const val = snapshot.val();
+                    if (!val) return;
+
+                    const gas = Number(val.gas || 0);
+                    const suhu = Number(val.temperature || 0);
+                    const hum = Number(val.humidity || 0);
+
+                    gasData.push([now, gas]);
+                    suhuData.push([now, suhu]);
+                    humData.push([now, hum]);
+
+                    if (gasData.length > 20) gasData.splice(1, 1);
+                    if (suhuData.length > 20) suhuData.splice(1, 1);
+                    if (humData.length > 20) humData.splice(1, 1);
+
+                    gasChart.draw(google.visualization.arrayToDataTable(gasData), {
+                        title: '',
+                        legend: { position: 'none' },
+                        curveType: 'function',
+                        colors: ['#FF9800'],
+                        hAxis: { textStyle: { fontSize: 10 } },
+                        vAxis: { minValue: 0 }
+                    });
+
+                    suhuChart.draw(google.visualization.arrayToDataTable(suhuData), {
+                        title: '',
+                        legend: { position: 'none' },
+                        curveType: 'function',
+                        colors: ['#F44336'],
+                        hAxis: { textStyle: { fontSize: 10 } },
+                        vAxis: { minValue: 0 }
+                    });
+
+                    humChart.draw(google.visualization.arrayToDataTable(humData), {
+                        title: '',
+                        legend: { position: 'none' },
+                        curveType: 'function',
+                        colors: ['#2196F3'],
+                        hAxis: { textStyle: { fontSize: 10 } },
+                        vAxis: { minValue: 0 }
+                    });
+                });
+            }, 1000);
+        }
+    </script>
+</head>
+
+<body>
+    <div class="card">
+        <div class="chart-title">GRAFIK GAS</div>
+        <div id="gas_chart" class="chart-container"></div>
+    </div>
+
+    <div class="card">
+        <div class="chart-title">GRAFIK SUHU</div>
+        <div id="suhu_chart" class="chart-container"></div>
+    </div>
+
+    <div class="card">
+        <div class="chart-title">GRAFIK KELEMBAPAN</div>
+        <div id="hum_chart" class="chart-container"></div>
+    </div>
+</body>
+
+</html>
