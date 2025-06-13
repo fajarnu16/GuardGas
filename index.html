@@ -11,7 +11,7 @@
             margin: 0;
             padding: 20px;
             font-family: 'Segoe UI', sans-serif;
-            background-color: #fdeaa7;
+            background-color: #FFD166FF;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -65,7 +65,8 @@
             const humChart = new google.visualization.LineChart(document.getElementById('hum_chart'));
 
             setInterval(() => {
-                const now = new Date().toLocaleTimeString();
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
 
                 database.ref('/sensor').once('value', snapshot => {
                     const val = snapshot.val();
@@ -75,13 +76,13 @@
                     const suhu = Number(val.temperature || 0);
                     const hum = Number(val.humidity || 0);
 
-                    gasData.push([now, gas]);
-                    suhuData.push([now, suhu]);
-                    humData.push([now, hum]);
+                    gasData.push([timeStr, gas]);
+                    suhuData.push([timeStr, suhu]);
+                    humData.push([timeStr, hum]);
 
-                    if (gasData.length > 20) gasData.splice(1, 1);
-                    if (suhuData.length > 20) suhuData.splice(1, 1);
-                    if (humData.length > 20) humData.splice(1, 1);
+                    if (gasData.length > 600) gasData.splice(1, 1);
+                    if (suhuData.length > 600) suhuData.splice(1, 1);
+                    if (humData.length > 600) humData.splice(1, 1);
 
                     gasChart.draw(google.visualization.arrayToDataTable(gasData), {
                         title: '',
